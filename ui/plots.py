@@ -6,9 +6,13 @@ def plot_prices(df, symbol_a, symbol_b):
     Plot price comparison for two symbols.
 
     Args:
-        df: DataFrame with columns 'ts', 'A', 'B'
-        symbol_a: Name of first symbol
-        symbol_b: Name of second symbol
+        df (pd.DataFrame):
+            DataFrame indexed by timestamp (ts) with columns named after symbols.
+            Expected columns: [symbol_a, symbol_b]
+        symbol_a (str):
+            First trading symbol (e.g. "ETHUSDT")
+        symbol_b (str):
+            Second trading symbol (e.g. "BTCUSDT")
 
     Returns:
         Plotly figure object
@@ -16,16 +20,16 @@ def plot_prices(df, symbol_a, symbol_b):
     fig = go.Figure()
 
     fig.add_trace(go.Scatter(
-        x=df["ts"],
-        y=df["A"],
+        x=df.index,
+        y=df[symbol_a],
         name=symbol_a,
         line=dict(width=2, color='#3b82f6'),
         hovertemplate='%{y:.2f}<extra></extra>'
     ))
 
     fig.add_trace(go.Scatter(
-        x=df["ts"],
-        y=df["B"],
+        x=df.index,
+        y=df[symbol_b],
         name=symbol_b,
         line=dict(width=2, color='#f59e0b'),
         hovertemplate='%{y:.2f}<extra></extra>'
@@ -112,13 +116,17 @@ def plot_spread_zscore(df, threshold=2.0):
         title="Spread & Z-Score Evolution",
         xaxis_title="Time",
         yaxis=dict(
-            title="Spread",
-            titlefont=dict(color="#3b82f6"),
+            title=dict(
+                text="Spread",
+                font=dict(color="#3b82f6")
+            ),
             tickfont=dict(color="#3b82f6")
         ),
         yaxis2=dict(
-            title="Z-Score",
-            titlefont=dict(color="#ef4444"),
+            title=dict(
+                text="Z-Score",
+                font=dict(color="#ef4444")
+            ),
             tickfont=dict(color="#ef4444"),
             overlaying="y",
             side="right"

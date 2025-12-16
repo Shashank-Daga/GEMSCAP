@@ -3,29 +3,15 @@ import numpy as np
 
 
 def compute_spread(df, symbol_a, symbol_b, hedge_ratio):
-    """
-    Compute the spread between two symbols using a hedge ratio.
+    wide = (
+        df[df["symbol"].isin([symbol_a, symbol_b])]
+        .pivot(index="ts", columns="symbol", values="price_close")
+        .dropna()
+    )
 
-    Spread = Price_A - hedge_ratio * Price_B
+    wide["spread"] = wide[symbol_a] - hedge_ratio * wide[symbol_b]
 
-    Args:
-        df: Resampled DataFrame with columns 'symbol', 'ts', 'price_close'
-        symbol_a: First symbol name
-        symbol_b: Second symbol name
-        hedge_ratio: Beta coefficient from OLS regression
-
-    Returns:
-        DataFrame with columns ['A', 'B', 'spread'] indexed by timestamp
-    """
-    a = df[df["symbol"] == symbol_a].set_index("ts")["price_close"]
-    b = df[df["symbol"] == symbol_b].set_index("ts")["price_close"]
-
-    merged = pd.concat([a, b], axis=1).dropna()
-    merged.columns = ["A", "B"]
-
-    merged["spread"] = merged["A"] - hedge_ratio * merged["B"]
-
-    return merged
+    return wide
 
 
 def compute_zscore(series, window):

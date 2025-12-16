@@ -1,22 +1,24 @@
 import statsmodels.api as sm
-import pandas as pd
 
 
-def compute_hedge_ratio(df, symbol_a, symbol_b):
+def compute_hedge_ratio(df, symbol_a, symbol_b, min_points=20):
     """
-    OLS regression: price_A ~ beta * price_B
-    Returns hedge ratio (beta).
+    Computes hedge ratio using OLS after aligning timestamps.
     """
-    a = df[df["symbol"] == symbol_a]["price_close"]
-    b = df[df["symbol"] == symbol_b]["price_close"]
 
-    aligned = pd.concat([a, b], axis=1).dropna()
-    aligned.columns = ["A", "B"]
+    wide = (
+        df[df["symbol"].isin([symbol_a, symbol_b])]
+        .pivot(index="ts", columns="symbol", values="price_close")
+        .dropna()
+    )
 
-    if len(aligned) < 20:
+    if len(wide) < min_points:
         return None
 
-    X = sm.add_constant(aligned["B"])
-    model = sm.OLS(aligned["A"], X).fit()
+    y = wide[symbol_a]
+    x = wide[symbol_b]
 
-    return model.params["B"]
+    x = sm.add_constant(x)
+    model = sm.OLS(y, x).fit()
+
+    return model.params[symbol_b]

@@ -225,23 +225,17 @@ if st.button("🚀 Run Analytics", type="primary", width="stretch"):
 
     if hedge is None:
         # Better diagnostics with correct threshold
-        a_data = resampled_df[resampled_df["symbol"] == symbol_a.upper()]
-        b_data = resampled_df[resampled_df["symbol"] == symbol_b.upper()]
+        aligned = (
+            resampled_df[resampled_df["symbol"].isin([symbol_a.upper(), symbol_b.upper()])]
+            .pivot(index="ts", columns="symbol", values="price")
+            .dropna()
+        )
 
         st.warning(f"⚠️ Not enough data for regression analysis.")
         st.info(f"""
-            **Data Available:**
-            - {symbol_a.upper()}: {len(a_data)} data points
-            - {symbol_b.upper()}: {len(b_data)} data points
-            - Total resampled: {len(resampled_df)} rows
-
-            **Requirement:** Need at least 20 aligned data points per symbol.
-
-            **Suggestions:**
-            - Wait longer for more data collection (60+ seconds)
-            - Use a shorter timeframe (try '1s' instead of '1m')
-            - Check that both symbols are actively trading
-            """)
+        **Aligned Data Available:**
+        - Paired observations: {len(aligned)}
+        """)
         st.stop()
 
     # Compute all analytics
@@ -347,14 +341,14 @@ if st.button("🚀 Run Analytics", type="primary", width="stretch"):
 
     with col1:
         st.markdown(f"**Price Statistics — {symbol_a.upper()}**")
-        stats_a = price_statistics(spread_df["A"])
+        stats_a = price_statistics(spread_df[symbol_a.upper()])
         stats_df_a = pd.DataFrame([stats_a]).T
         stats_df_a.columns = ["Value"]
         st.dataframe(stats_df_a, width="stretch")
 
     with col2:
         st.markdown(f"**Price Statistics — {symbol_b.upper()}**")
-        stats_b = price_statistics(spread_df["B"])
+        stats_b = price_statistics(spread_df[symbol_b.upper()])
         stats_df_b = pd.DataFrame([stats_b]).T
         stats_df_b.columns = ["Value"]
         st.dataframe(stats_df_b, width="stretch")
