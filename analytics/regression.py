@@ -13,7 +13,7 @@ def compute_hedge_ratio(df, symbol_a, symbol_b):
     aligned = pd.concat([a, b], axis=1).dropna()
     aligned.columns = ["A", "B"]
 
-    if len(aligned) < 40:
+    if len(aligned) < 20:
         return None
 
     X = sm.add_constant(aligned["B"])

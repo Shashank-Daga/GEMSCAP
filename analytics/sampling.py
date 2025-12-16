@@ -3,9 +3,9 @@ from sqlalchemy import text
 from storage.db import engine
 
 VALID_TIMEFRAMES = {
-    "1s": "1S",
-    "1m": "1T",
-    "5m": "5T"
+    "1s": "1s",
+    "1m": "1min",
+    "5m": "5min"
 }
 
 
@@ -29,11 +29,13 @@ def load_ticks(symbols, lookback_minutes=60):
     if df.empty:
         return df
 
-    df["ts"] = pd.to_datetime(df["ts"])
+    df["ts"] = pd.to_datetime(df["ts"], format='ISO8601')
     df.set_index("ts", inplace=True)
 
     return df
 
+
+# REPLACE THE ENTIRE FUNCTION with this:
 
 def resample_ticks(df, timeframe):
     """
@@ -44,16 +46,27 @@ def resample_ticks(df, timeframe):
 
     rule = VALID_TIMEFRAMES[timeframe]
 
-    resampled = (
-        df.groupby("symbol")
-          .resample(rule)
-          .agg(
-              price_open=("price", "first"),
-              price_high=("price", "max"),
-              price_low=("price", "min"),
-              price_close=("price", "last"),
-              volume=("size", "sum")
-          ).dropna().reset_index()
-    )
+    # Process each symbol separately to avoid warnings
+    resampled_list = []
+
+    for symbol in df['symbol'].unique():
+        symbol_df = df[df['symbol'] == symbol].copy()
+
+        resampled_symbol = symbol_df.resample(rule).agg({
+            'price': ['first', 'max', 'min', 'last'],
+            'size': 'sum'
+        })
+
+        resampled_symbol.columns = ['price_open', 'price_high', 'price_low', 'price_close', 'volume']
+        resampled_symbol['symbol'] = symbol
+        resampled_symbol = resampled_symbol.reset_index()
+
+        resampled_list.append(resampled_symbol)
+
+    if resampled_list:
+        resampled = pd.concat(resampled_list, ignore_index=True)
+        resampled = resampled.dropna()
+    else:
+        resampled = pd.DataFrame()
 
     return resampled

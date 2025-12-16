@@ -82,7 +82,7 @@ except:
 col_start, col_stop = st.sidebar.columns(2)
 
 with col_start:
-    if st.button("▶️ Start", use_container_width=True):
+    if st.button("▶️ Start", width="stretch"):
         if not st.session_state.ingestion_running:
             symbols = [s.strip().lower() for s in symbols_input.split(",") if s.strip()]
             if not symbols:
@@ -101,7 +101,7 @@ with col_start:
                 st.rerun()
 
 with col_stop:
-    if st.button("⏹️ Stop", use_container_width=True):
+    if st.button("⏹️ Stop", width="stretch"):
         if st.session_state.ingestion_running and st.session_state.stop_event:
             st.session_state.stop_event.set()
             st.session_state.ingestion_running = False
@@ -143,7 +143,7 @@ with st.expander("📊 Data Preview", expanded=False):
                 else:
                     st.dataframe(
                         resampled_df.tail(20),
-                        use_container_width=True,
+                        width="stretch",
                         height=300
                     )
 
@@ -205,7 +205,7 @@ with col5:
     )
 
 # Run Analytics Button
-if st.button("🚀 Run Analytics", type="primary", use_container_width=True):
+if st.button("🚀 Run Analytics", type="primary", width="stretch"):
 
     with st.spinner("📥 Loading data..."):
         raw_df = load_ticks(symbols)
@@ -224,8 +224,24 @@ if st.button("🚀 Run Analytics", type="primary", use_container_width=True):
         hedge = compute_hedge_ratio(resampled_df, symbol_a.upper(), symbol_b.upper())
 
     if hedge is None:
-        st.warning("⚠️ Not enough data for regression analysis. Need at least 40 data points.")
-        st.info(f"Current resampled data points: {len(resampled_df)}")
+        # Better diagnostics with correct threshold
+        a_data = resampled_df[resampled_df["symbol"] == symbol_a.upper()]
+        b_data = resampled_df[resampled_df["symbol"] == symbol_b.upper()]
+
+        st.warning(f"⚠️ Not enough data for regression analysis.")
+        st.info(f"""
+            **Data Available:**
+            - {symbol_a.upper()}: {len(a_data)} data points
+            - {symbol_b.upper()}: {len(b_data)} data points
+            - Total resampled: {len(resampled_df)} rows
+
+            **Requirement:** Need at least 20 aligned data points per symbol.
+
+            **Suggestions:**
+            - Wait longer for more data collection (60+ seconds)
+            - Use a shorter timeframe (try '1s' instead of '1m')
+            - Check that both symbols are actively trading
+            """)
         st.stop()
 
     # Compute all analytics
@@ -334,14 +350,14 @@ if st.button("🚀 Run Analytics", type="primary", use_container_width=True):
         stats_a = price_statistics(spread_df["A"])
         stats_df_a = pd.DataFrame([stats_a]).T
         stats_df_a.columns = ["Value"]
-        st.dataframe(stats_df_a, use_container_width=True)
+        st.dataframe(stats_df_a, width="stretch")
 
     with col2:
         st.markdown(f"**Price Statistics — {symbol_b.upper()}**")
         stats_b = price_statistics(spread_df["B"])
         stats_df_b = pd.DataFrame([stats_b]).T
         stats_df_b.columns = ["Value"]
-        st.dataframe(stats_df_b, use_container_width=True)
+        st.dataframe(stats_df_b, width="stretch")
 
     # ========== ADVANCED ANALYTICS ==========
     with st.expander("🔬 Advanced Analytics - Stationarity Test", expanded=False):
@@ -385,7 +401,7 @@ if st.button("🚀 Run Analytics", type="primary", use_container_width=True):
             data=csv_spread,
             file_name=f"spread_analytics_{symbol_a}_{symbol_b}.csv",
             mime="text/csv",
-            use_container_width=True
+            width="stretch"
         )
 
     with col2:
@@ -395,7 +411,7 @@ if st.button("🚀 Run Analytics", type="primary", use_container_width=True):
             data=csv_resampled,
             file_name=f"resampled_prices_{timeframe}.csv",
             mime="text/csv",
-            use_container_width=True
+            width="stretch"
         )
 
 # Footer
