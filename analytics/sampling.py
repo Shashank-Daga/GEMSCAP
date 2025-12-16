@@ -19,6 +19,7 @@ def load_ticks(symbols, lookback_minutes=60):
         SELECT ts, symbol, price, size
         FROM ticks
         WHERE symbol IN ({placeholders})
+            AND ts >= datetime('now', '-{lookback_minutes} minutes')
         ORDER BY ts ASC
     """)
 

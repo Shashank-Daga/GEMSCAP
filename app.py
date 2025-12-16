@@ -47,20 +47,28 @@ def run_ingestion(symbols):
     asyncio.run(start_stream(symbols))
 
 
+# Add to session state
+if "ingestion_task" not in st.session_state:
+    st.session_state.ingestion_task = None
+    st.session_state.stop_event = None
+
 if st.sidebar.button("Start Ingestion"):
     if not st.session_state.ingestion_running:
-        symbols = [s.strip().lower() for s in symbols_input.split(",") if s.strip()]
+        st.session_state.stop_event = threading.Event()
+        symbols = [s.strip().lower() for s in symbols_input.split(",")]
         t = threading.Thread(
             target=run_ingestion,
-            args=(symbols,),
+            args=(symbols, st.session_state.stop_event),
             daemon=True
         )
         t.start()
+        st.session_state.ingestion_task = t
         st.session_state.ingestion_running = True
-        st.sidebar.success("Ingestion started")
 
 if st.sidebar.button("Stop Ingestion"):
-    st.warning("Stop functionality will be refined later.")
+    if st.session_state.ingestion_running and st.session_state.stop_event:
+        st.session_state.stop_event.set()
+        st.session_state.ingestion_running = False
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### Analytics Controls")
@@ -117,11 +125,12 @@ alert_threshold = st.number_input(
 )
 
 if st.button("Run Analytics"):
+    with st.spinner("Loading data..."):
+        raw_df = load_ticks(symbols)
+        resampled_df = resample_ticks(raw_df, timeframe)
 
-    raw_df = load_ticks(symbols)
-    resampled_df = resample_ticks(raw_df, timeframe)
-
-    hedge = compute_hedge_ratio(resampled_df, symbol_a.upper(), symbol_b.upper())
+    with st.spinner("Computing analytics..."):
+        hedge = compute_hedge_ratio(resampled_df, symbol_a.upper(), symbol_b.upper())
 
     if hedge is None:
         st.warning("Not enough data for regression.")

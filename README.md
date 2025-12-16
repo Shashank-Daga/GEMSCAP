@@ -97,3 +97,16 @@ pip install -r requirements.txt
 ```bash
 streamlit run app.py
 ```
+
+---
+
+## Design Decisions & Trade-offs
+
+- **Streamlit** was chosen for rapid prototyping and interactive analytics.
+- **SQLite** provides lightweight persistence suitable for a single-user prototype.
+- Analytics are computed on-demand to avoid unnecessary recomputation.
+- User-triggered execution balances responsiveness and system stability.
+
+These trade-offs were made intentionally to prioritize clarity, correctness,
+and extensibility over production-grade latency.
+

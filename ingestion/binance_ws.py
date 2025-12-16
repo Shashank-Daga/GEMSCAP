@@ -3,8 +3,11 @@ import json
 from datetime import datetime
 import websockets
 from storage.db import insert_tick
+import logging
 
 BINANCE_FUTURES_WS = "wss://fstream.binance.com/ws"
+
+logger = logging.getLogger(__name__)
 
 
 async def stream_symbol(symbol: str):
@@ -23,7 +26,10 @@ async def stream_symbol(symbol: str):
                     size = float(data.get("q"))
 
                     insert_tick(ts, symbol, price, size)
-            except Exception:
+            except json.JSONDecodeError as e:
+                logger.warning(f"JSON decode error for {symbol}: {e}")
+            except Exception as e:
+                logger.error(f"Unexpected error processing {symbol}: {e}")
                 continue
 
 

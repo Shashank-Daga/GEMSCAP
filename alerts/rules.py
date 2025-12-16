@@ -2,20 +2,13 @@ def check_zscore_alert(zscore_series, threshold):
     """
     Checks if the latest z-score breaches the threshold.
     """
-    if zscore_series.empty:
-        return None
+    clean = zscore_series.dropna()
+    if clean.empty:
+        return {"triggered": False, "value": None, "threshold": threshold}
 
-    latest = zscore_series.dropna().iloc[-1]
-
-    if abs(latest) >= threshold:
-        return {
-            "triggered": True,
-            "value": float(latest),
-            "threshold": threshold
-        }
-
+    latest = float(clean.iloc[-1])
     return {
-        "triggered": False,
-        "value": float(latest),
+        "triggered": abs(latest) >= threshold,
+        "value": latest,
         "threshold": threshold
     }
